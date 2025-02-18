@@ -17,6 +17,23 @@
       padding-bottom: {{ section.settings.padding_bottom }}px;
     }
   }
+.product-option.item_prob {
+  display: flex;
+  flex-direction: column;
+}
+.product-option.item_prob dt {
+	font-weight: bold;
+}
+  .product-option.item_prob dd {
+}
+.view-image-btn {
+	background-color: transparent;
+	cursor: pointer;
+	border: 1px solid #000;
+	border-radius: 50px;
+	padding: 2px 10px;
+	box-shadow: 2px 2px 4px #0005;
+}
 {%- endstyle -%}
 
 {%- unless settings.cart_type == 'drawer' -%}
@@ -142,18 +159,25 @@
                           {%- for property in item.properties -%}
                             {%- assign property_first_char = property.first | slice: 0 -%}
                             {%- if property.last != blank and property_first_char != '_' -%}
-                              <div class="product-option">
-                                <dt>{{ property.first }}:</dt>
-                                <dd>
-                                  {%- if property.last contains '/uploads/' -%}
-                                    <a href="{{ property.last }}" class="link" target="_blank">
-                                      {{ property.last | split: '/' | last }}
-                                    </a>
-                                  {%- else -%}
-                                    {{ property.last }}
-                                  {%- endif -%}
-                                </dd>
-                              </div>
+                              <div class="product-option item_prob {% if property.last contains '/uploads/' %}   has_media {% endif %}">
+                                    <dt>{{ property.first }}:</dt>
+                                    <dd>
+                                      {%- assign file_extension = property.last | split: '.' | last | downcase -%}
+                                        {%- assign image_extensions = "jpg,jpeg,png,gif,bmp,svg,webp" | split: ',' -%}
+                                        
+                                        {%- if property.last contains '/uploads/' -%}
+                                          {%- if image_extensions contains file_extension -%}
+                                            <span class="view-image-btn">View Image</span> 
+                                            <img src="{{ property.last }}" alt="Uploaded Image" width="200px" height="auto" class="uploaded-image" style="display:none;">
+                                            {%- else -%}
+                                            <a href="{{ property.last }}" class="link" target="_blank" aria-describedby="a11y-new-window-message" > View Attachment </a> 
+                                            {%- endif -%}
+                                          {%- else -%}
+                                          {{ property.last }}
+                                        {%- endif -%}
+
+                                    </dd>
+                                  </div>
                             {%- endif -%}
                           {%- endfor -%}
                         </dl>

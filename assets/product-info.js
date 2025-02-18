@@ -212,6 +212,8 @@ if (!customElements.get('product-info')) {
       }
 
       updateVariantInputs(variantId) {
+        // console.log("updateVariantInputs Class. - assests/product-info.js");
+        setupProductFormListeners(); // --- Custom solution.
         this.querySelectorAll(
           `#product-form-${this.dataset.section}, #product-form-installment-${this.dataset.section}`
         ).forEach((productForm) => {
@@ -414,3 +416,72 @@ if (!customElements.get('product-info')) {
     }
   );
 }
+
+
+// -------- custom modes starts here -------
+const defaultATCc = document.querySelector(".product-form__buttons button[type='submit']")
+function setupProductFormListeners() {
+  const variantSelects = document.querySelector(".product variant-selects");
+  if (!variantSelects) {
+    console.error('Parent element not found');
+    return;
+  }
+  const productFormInputs = variantSelects.querySelectorAll(".product-form__input");
+  productFormInputs.forEach(function(productFormInput) {
+    const inputElement = productFormInput.querySelector("input");
+    const inputName = inputElement.name;
+    const inputValue = inputElement.value;
+    const inputIndex = inputElement.dataset.inputIndex;
+    const optionName = inputElement.dataset.optionName;
+    handleOptionChange(inputElement);
+  });
+  function handleOptionChange(inputElement) {
+      const optionName = inputElement.dataset.optionName;
+      const inputValue = inputElement.checked ? "No" : "Yes";
+      const CustomOptions = document.getElementById("Custom_options_wrapper");
+      const switchElements = CustomOptions.querySelectorAll(".line-item-property__field.switch");
+      switchElements.forEach(function(switchElement) {
+          const switchOptionName = switchElement.dataset.optionName;
+          if (switchOptionName === optionName) {
+              if (inputValue === "Yes") {
+                  switchElement.classList.remove("hidden");
+              } else {
+                  switchElement.classList.add("hidden");
+                switchElement.querySelector('input').value = ''; 
+              }
+          }
+      });
+  }
+
+const customFormInputs = document.querySelectorAll(".line-item-property__field.switch:not(.hidden)");
+customFormInputs.forEach(function (customFormInput) {
+  const customInput = customFormInput.querySelector('input');
+  customInput.addEventListener('input', function(e) {
+    checkInputValues();
+  });
+});
+
+function checkInputValues() {
+  let allFilled = true;
+  customFormInputs.forEach(function (customFormInput) {
+    const customInput = customFormInput.querySelector('input');
+    if (!customInput.value) {
+      allFilled = false;
+      defaultATCc.disabled = true;
+      defaultATCc.style.opacity = '50%' ;
+      return;
+    }
+  });
+  if (allFilled) {
+    defaultATCc.disabled = false;
+    defaultATCc.style.opacity = '100%' ; 
+  }
+}
+// Initial check on page load
+checkInputValues();
+
+  
+}
+document.addEventListener('DOMContentLoaded', function() {
+  setupProductFormListeners();
+});

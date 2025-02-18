@@ -6,6 +6,7 @@ class CartRemoveButton extends HTMLElement {
       event.preventDefault();
       const cartItems = this.closest('cart-items') || this.closest('cart-drawer-items');
       cartItems.updateQuantity(this.dataset.index, 0);
+      customChange(this.dataset.index)
     });
   }
 }
@@ -23,6 +24,7 @@ class CartItems extends HTMLElement {
     }, ON_CHANGE_DEBOUNCE_TIMER);
 
     this.addEventListener('change', debouncedOnChange.bind(this));
+    viewImage();
   }
 
   cartUpdateUnsubscriber = undefined;
@@ -87,6 +89,7 @@ class CartItems extends HTMLElement {
   }
 
   onCartUpdate() {
+    viewImage();
     if (this.tagName === 'CART-DRAWER-ITEMS') {
       fetch(`${routes.cart_url}?section_id=cart-drawer`)
         .then((response) => response.text())
@@ -284,3 +287,105 @@ if (!customElements.get('cart-note')) {
     }
   );
 }
+
+
+// ----- custom solution for cart items ----
+function updateCartUI() {
+// viewImage();
+  fetch('/cart')
+    .then(response => response.text())
+    .then(data => {
+      // Create a temporary DOM element to parse the fetched HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = data;
+
+      // Extract the new content from the fetched HTML
+      const newContent = tempDiv.querySelector('.cart-drawer') ? tempDiv.querySelector('.cart-drawer').innerHTML : '';
+
+      // Update the target element with the new content
+      const cartDrawer = document.querySelector('.cart-drawer');
+      if (cartDrawer) {
+        cartDrawer.innerHTML = newContent;
+      } else {
+        console.error('CartDrawer element not found');
+      }
+    })
+    .catch(error => {
+      console.error('Error refreshing cart:', error);
+    });
+}
+
+function customChange(removedIndex) {
+
+  // Fetch the cart details first
+  fetch('/cart.js')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok ' + response.statusText);
+      }
+      return response.json();
+    })
+    .then(cart => {
+      // Check if the previous line item exists and has the "Gift Packaging" property
+      if (removedIndex > 1) {
+        const previousLineItem = cart.items[removedIndex - 2];
+        if (previousLineItem.properties && previousLineItem.properties['Gift Packaging']) {
+          // console.log("Gift Packaging property found in the previous line item:", previousLineItem.properties['Gift Packaging']);
+
+          // Create a new properties object without the 'Gift Packaging' property
+          const updatedProperties = { ...previousLineItem.properties };
+          delete updatedProperties['Gift Packaging'];
+
+          fetch('/cart/change.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              line: removedIndex - 1,
+              properties: updatedProperties
+            }),
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Cart updated:', data);
+            updateCartUI()
+            viewImage();
+          })
+          .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+          });
+        } else {
+          console.log("No 'Gift Packaging' property found in the previous line item.");
+        }
+      } else {
+        console.log("No previous item to update.");
+      }
+    })
+    .catch(error => {
+      console.error('There was a problem with the fetch operation:', error);
+    });
+}
+function viewImage(){
+  // console.log("viewImage has been called ")
+document.querySelectorAll(".view-image-btn").forEach(span => {
+  span.addEventListener("click", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const image = this.nextElementSibling; // Get the next sibling element (the image)
+    if (image.style.display === "none") {
+      image.style.display = "block";
+      // this.textContent = "Hide Image"; // Change button label to "Hide Image"
+    } else {
+      image.style.display = "none";
+      // this.textContent = "View Image"; // Change button label to "View Image"
+    }
+  });
+});
+}
+// viewImage();

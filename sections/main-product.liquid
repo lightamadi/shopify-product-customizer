@@ -71,6 +71,94 @@
       onload="this.media='all'"
     >
   {%- endif -%}
+<style>
+.line-item-property__field * {
+	display: block;
+}
+.line-item-property__field label {
+	max-width: fit-content;
+	left: 6px;
+	position: relative;
+	background-color: #353535;
+	color: #fff;
+	border-radius: 8px 8px 0px 0px;
+	padding: 0 10px;
+	font-size: 13px;
+	line-height: 1.5;
+	top: 1px;
+}
+  #Custom_options_wrapper input,
+  #Custom_options_wrapper textarea,
+  .with_upload_icon {
+    border: 1px solid #0008;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100%;
+  }
+  #uploaded-desgin-field,
+  #uploaded-desgin-field input{
+    cursor: pointer;
+  }
+  .with_upload_icon{
+    display:flex;
+  }
+.with_upload_icon input {
+	border: 0 !important;
+	padding: 3px !important;
+	border-radius: 0 !important;
+}
+.with_upload_icon svg {
+	width: 35px;
+	height: auto;
+	fill: #353535;
+}
+.small_note {
+	position: relative;
+	left: 8px;
+	bottom: 3px;
+	color: #ff9898;
+	font-size: 12px;
+}
+  /* --------- checkbox --------- */
+.selector_cont {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	border: 1px solid #ed3939;;
+	padding: 24px 10px 10px;
+	border-radius: 8px;
+	margin-top: -10px;
+}
+  #variant-selector {
+	flex: 2;
+}
+.warp_checkbox_cont label {
+	display: flex;
+	background-color: #fff;
+	z-index: 5;
+	position: relative;
+	max-width: fit-content;
+	left: 10px;
+	padding: 0px 8px 0px;
+    cursor: pointer;
+
+	user-select: none;
+	-webkit-user-select: none;
+
+}
+.warp_checkbox_cont label h3 {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;	
+  line-height: 1;
+  margin: 0;
+}
+.disable_unselect{
+  opacity: 50%;
+  pointer-events: none;
+}
+
+</style>
 
   {% assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src' %}
   <div class="page-width">
@@ -89,6 +177,67 @@
             {%- case block.type -%}
               {%- when '@app' -%}
                 {% render block %}
+              {%- when 'gift_packaging'  -%}
+                {% assign pack_product = block.settings.packaging_gift %}
+                {% if pack_product %}
+                  <div class="gift_wrape_maincontainer">
+                    <div class="warp_checkbox_cont">
+                      <label for="gift-wrap">
+                        <input type="checkbox" id="gift-wrap" name="gift_wrap">
+                         <h3>{{ block.settings.wrape_check_text }}</h3>
+                      </label>
+                    </div>
+                  
+                    {% assign gift_product = all_products[pack_product] %}
+                    <div id="gift_wrape_id" class="selector_cont disable_unselect">
+                      <label for="variant-selector">{{ block.settings.select_label }}</label>
+                      <select id="variant-selector" name="variant">
+                        {% for variant in gift_product.variants %}
+                          <option value="{{ variant.id }}" data-variant-name="{{ variant.title }}" data-gift-label="{{ block.settings.wrape_check_text }}">
+                            {{ variant.title }} + {{ variant.price | money }}
+                          </option>
+                        {% endfor %}
+                       </select>
+                    </div>
+                  </div>                 
+                {% endif %}
+                
+              {%- when 'Custom_options' -%}
+              {% liquid
+                assign given_meta = block.settings.show_metafield
+                assign namespace = given_meta | split: '.' | first
+                assign key = given_meta | split: '.' | last
+                assign dynamic_meta = product.metafields[namespace][key].value
+                assign show_on_all = block.settings.show_field_on_All
+              %}
+              <div id="Custom_options_wrapper">
+                {% if dynamic_meta or show_on_all %}
+                  <p id="custom-text-field" data-option-name="{{ block.settings.custom_input_1 }}" class="line-item-property__field switch hidden">
+                    <label for="custom-text">Custom text:</label>
+                    <input form="{{ product_form_id }}" required placeholder="Enter your Custom Text" class="required" id="custom-text" type="text" name="properties[Custom text]">
+                  </p>
+                  <p id="uploaded-desgin-field" data-option-name="{{ block.settings.custom_input_2 }}" class="line-item-property__field switch hidden">
+                    <label for="uploaded-desgin">Upload desgin:</label>
+                    <span class="with_upload_icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><title/><g data-name="Layer 7" id="Layer_7"><path d="M21,30H11a5,5,0,0,1-5-5V7a5,5,0,0,1,5-5h8a1,1,0,0,1,.71.29l6,6A1,1,0,0,1,26,9V25A5,5,0,0,1,21,30ZM11,4A3,3,0,0,0,8,7V25a3,3,0,0,0,3,3H21a3,3,0,0,0,3-3V9.41L18.59,4Z"/><path d="M16.71,11.29a1,1,0,0,0-1.42,0l-4,4a1,1,0,0,0-.21,1.09A1,1,0,0,0,12,17h1v3a1,1,0,0,0,1,1h4a1,1,0,0,0,1-1V17h1a1,1,0,0,0,.92-.62,1,1,0,0,0-.21-1.09Z"/><path d="M25.71,8.29l-6-6a1,1,0,0,0-1.09-.21A1,1,0,0,0,18,3V8a2,2,0,0,0,2,2h5a1,1,0,0,0,.92-.62A1,1,0,0,0,25.71,8.29Z"/><path d="M24,29H8V16.63c0,2,2.08,8.08,6.58,8.08,4,0,9.42-1,9.42-4.92Z"/></g></svg>
+                      <input form="{{ product_form_id }}" required class="required" id="uploaded-desgin" type="file" accept="image/*" name="properties[Uploaded desgin]">
+                    </span>
+                  </p>
+                  <p id="monogram-initials-field" data-option-name="{{ block.settings.custom_input_3 }}" class="line-item-property__field switch hidden">
+                    <label for="monogram-initials">Monogram/Initials:</label>
+                    <input form="{{ product_form_id }}" required placeholder="Enter you Initials" class="required" id="monogram-initials" type="text" name="properties[Monogram/Initials]" maxlength="5">
+                    <span class="small_note">Max characters 5</span>
+                  </p>
+                {% endif %}
+                {% if block.settings.check_instruction_filed %}
+                  <p class="line-item-property__field">
+                    <label for="spacial-instructions">Special Instructions (Optional):</label>
+                    <textarea form="{{ product_form_id }}" placeholder="Add any special Requests" id="spacial-instructions" name="properties[Spacial Instructions]"></textarea>
+                  </p>
+                {% endif %}
+                  <div id="gift_packaging" data-form="{{ product_form_id }}"></div>
+              </div>
+              
               {%- when 'text' -%}
                 <p
                   class="product__text inline-richtext{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}"
@@ -723,7 +872,6 @@
     </script>
   </div>
 </product-info>
-
 {% schema %}
 {
   "name": "t:sections.main-product.name",
@@ -732,6 +880,78 @@
   "blocks": [
     {
       "type": "@app"
+    },
+    {
+      "type":"gift_packaging",
+      "name":"Gift Packaging",
+      "settings":[
+        {
+          "type":"text",
+          "id":"wrape_check_text",
+          "label":"Check Box Label",
+          "default":"Gift Wrap this Product"
+        },
+        {
+        "type":"product",
+        "id":"packaging_gift",
+        "label":"Select Packaging Product"
+        },
+        {
+          "type":"text",
+          "id":"select_label",
+          "label":"Add selector Label",
+          "default":"choose varinat:"
+        }
+      ]
+    },
+    {
+      "type":"Custom_options",
+      "name":"Personalized Options",
+      "settings":[
+        {
+          "type":"header",
+          "content":"Custom input fields settings",
+          "info":"Based on those setting, the input filed will be shown/hidden"
+        },
+        {
+          "type":"text",
+          "id":"custom_input_1",
+          "label":"Add the Options's name for 'Custom Text' input"
+        },
+        {
+          "type":"text",
+          "id":"custom_input_2",
+          "label":"Add the Options's name for 'Upload Design (type:file)' input"
+        },
+        {
+          "type":"text",
+          "id":"custom_input_3",
+          "label":"Add the Options's name for 'Monogram/Initials' input"
+        },
+        {
+          "type":"checkbox",
+          "id":"check_instruction_filed",
+          "label":"Show the Instruction filed",
+          "default":true
+        },
+        {
+          "type":"header",
+          "content":"Custom fields display settings"
+        },
+        {
+          "type":"text",
+          "id":"show_metafield",
+          "label":"Enter the 'Namespace and key' of the Metafield",
+          "info":"Admin/ product deatails page - metafiedl section, Trun the metafield to TRUE to show custom field on the perticular product."
+        },
+        {
+          "type":"checkbox",
+          "id":"show_field_on_All",
+          "label":"Show Custom Filed to all products",
+          "info":"once this options true the fields will be shown to All products and will overwrite the metafield settings- MAKE SURE YOU KNOW WHAT YOU DOING...",
+          "default":false
+        }
+      ]
     },
     {
       "type": "text",

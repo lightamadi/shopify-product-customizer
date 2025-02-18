@@ -4,10 +4,18 @@ if (!customElements.get('product-form')) {
     class ProductForm extends HTMLElement {
       constructor() {
         super();
-
         this.form = this.querySelector('form');
         this.variantIdInput.disabled = false;
-        this.form.addEventListener('submit', this.onSubmitHandler.bind(this));
+          // wrpeToCart()
+        // this.form.addEventListener('submit', this.onSubmitHandler.bind(this)); // -- Default for reference.
+        this.form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          setTimeout(() => {
+            this.onSubmitHandler(event);
+          }, 500); // 000 milliseconds delay
+        });
+
+
         this.cart = document.querySelector('cart-notification') || document.querySelector('cart-drawer');
         this.submitButton = this.querySelector('[type="submit"]');
         this.submitButtonText = this.submitButton.querySelector('span');
@@ -72,6 +80,7 @@ if (!customElements.get('product-form')) {
                 productVariantId: formData.get('id'),
                 cartData: response,
               });
+
             this.error = false;
             const quickAddModal = this.closest('quick-add-modal');
             if (quickAddModal) {
@@ -131,3 +140,84 @@ if (!customElements.get('product-form')) {
     }
   );
 }
+
+// ------------ Gift wrap js -----------
+function addToCart(variantId, quantity) {
+  const identifier= new Date().getTime();
+  return fetch('/cart/add.js', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      id: variantId,
+      quantity: quantity,
+      properties: { 'ID': identifier }
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    // console.log('Added to cart:', data);
+    // Update cart UI
+    // updateCartUI();
+  })
+  .catch(error => {
+    console.error('Error adding to cart:', error);
+  });
+}
+
+
+  const giftWrap = document.getElementById("gift-wrap");
+  const selectorCont = document.querySelector(".selector_cont");
+  const variantSelector = document.getElementById("variant-selector");
+  const giftWrapeId = document.getElementById("gift_wrape_id");
+
+function wrpeToCart(){
+  const variantId = giftWrapeId.getAttribute("data-selected-option")
+  if (variantId){
+  const quantity = 1
+    addToCart(variantId, quantity)
+  }
+}
+
+const giftPackaging = document.getElementById("gift_packaging");
+const dataFormId = giftPackaging.dataset.form
+const defaultATC = document.querySelector(".product-form__buttons button[type='submit']")
+defaultATC.addEventListener('click', wrpeToCart);
+
+
+  if (giftWrap && variantSelector && selectorCont) {
+    giftWrap.addEventListener("change", function(event) {
+      const checkBox = event.target.checked;
+      if (checkBox) {
+        selectorCont.classList.remove("disable_unselect");
+        
+        const selectedOption = variantSelector.options[variantSelector.selectedIndex];
+        giftWrapeId.setAttribute("data-selected-option", selectedOption.value);
+          giftPackaging.innerHTML = `
+            <p data-option-name="Gift Packaging" class="line-item-property__field hidden">
+              <label for="custom-text">Gift Packaging</label>
+              <input form="${dataFormId}" required class="required" id="Gift Packaging" type="text" value="${selectedOption.dataset.variantName}" name="properties[Gift Packaging]">
+            </p>`
+        variantSelector.addEventListener("change", function(e) {
+          const newSelectedOption = e.target.options[e.target.selectedIndex];
+          giftWrapeId.setAttribute("data-selected-option", newSelectedOption.value);
+          // console.log("newSelectedOption.title: ", newSelectedOption.dataset.variantName)
+          giftPackaging.innerHTML = `
+            <p data-option-name="Gift Packaging" class="line-item-property__field hidden">
+              <label for="custom-text">Gift Packaging</label>
+              <input form="${dataFormId}" required  class="required" id="Gift Packaging" type="text" value="${newSelectedOption.dataset.variantName}" name="properties[Gift Packaging]">
+            </p>`
+        });
+
+      } else {
+        selectorCont.classList.add("disable_unselect");
+        giftWrapeId.removeAttribute("data-selected-option");
+        giftPackaging.innerHTML = '';
+      }
+      console.log("Checked status: ", checkBox);
+    });
+  } else {
+    console.error('One or more elements not found');
+  }

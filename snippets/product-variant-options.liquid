@@ -50,6 +50,8 @@
   {%- capture input_dataset -%}
     data-product-url="{{ value.product_url }}"
     data-option-value-id="{{ value.id }}"
+    data-input-index = "{{ option.position }}" # custom addition
+    data-option-name = "{{ option.name }}" # custom addition
   {%- endcapture -%}
 
   {%- capture label_unavailable -%}
